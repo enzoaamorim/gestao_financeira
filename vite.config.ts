@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Amorim — Gestão Financeira',
+        name: 'Amorim',
         short_name: 'Amorim',
-        description: 'Gestão financeira pessoal simples e inteligente.',
+        description: 'Finanças, treino e hábitos em um só lugar.',
         theme_color: '#0a0a0b',
         background_color: '#0a0a0b',
         display: 'standalone',
