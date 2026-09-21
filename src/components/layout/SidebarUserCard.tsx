@@ -6,18 +6,25 @@ export function SidebarUserCard() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-surface-2 p-4">
-      <div className="flex items-center gap-3">
-        <AvatarUploader />
-        <p className="min-w-0 truncate text-xs text-muted" title={user?.email}>
-          {user?.email}
-        </p>
-      </div>
-      <div className="flex items-center justify-between">
-        <Link to="/configuracoes" className="text-xs font-semibold text-muted hover:text-ink">
-          ⚙️ Configurações
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface-2 p-4">
+      <AvatarUploader />
+      <p className="w-full truncate text-center text-xs font-medium text-ink" title={user?.email}>
+        {user?.email}
+      </p>
+      <div className="flex w-full items-center justify-center gap-3 border-t border-border pt-3">
+        <Link
+          to="/configuracoes"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-sm text-muted hover:bg-surface hover:text-ink"
+          aria-label="Configurações"
+          title="Configurações"
+        >
+          ⚙️
         </Link>
-        <button onClick={() => signOut()} className="text-xs font-semibold text-pink hover:underline">
+        <span className="h-3 w-px bg-border" />
+        <button
+          onClick={() => signOut()}
+          className="text-xs font-semibold text-pink hover:underline"
+        >
           Sair
         </button>
       </div>
