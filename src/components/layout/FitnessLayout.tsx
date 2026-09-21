@@ -3,19 +3,18 @@ import clsx from "clsx";
 import { Logo } from "../ui/Logo";
 import { ModuleSwitcher } from "./ModuleSwitcher";
 import { useAuth } from "../../context/AuthContext";
-import { useFinance } from "../../context/FinanceContext";
+import { useWorkout } from "../../context/WorkoutContext";
 
 const navItems = [
-  { to: "/app", label: "Dashboard", icon: "📊", end: true },
-  { to: "/app/transacoes", label: "Transações", icon: "💸" },
-  { to: "/app/contas", label: "Contas e cartões", icon: "🏦" },
-  { to: "/app/metas", label: "Metas e orçamento", icon: "🎯" },
-  { to: "/app/categorias", label: "Categorias", icon: "🏷️" },
+  { to: "/treino", label: "Dashboard", icon: "📈", end: true },
+  { to: "/treino/registrar", label: "Registrar treino", icon: "📝" },
+  { to: "/treino/rotinas", label: "Rotinas", icon: "🗓️" },
+  { to: "/treino/exercicios", label: "Exercícios", icon: "💪" },
 ];
 
-export function AppLayout() {
+export function FitnessLayout() {
   const { user, signOut } = useAuth();
-  const { loading, error, clearError } = useFinance();
+  const { loading, error, clearError } = useWorkout();
 
   return (
     <div className="flex min-h-screen bg-bg text-ink">
@@ -48,10 +47,7 @@ export function AppLayout() {
           <p className="truncate text-xs text-muted" title={user?.email}>
             {user?.email}
           </p>
-          <button
-            onClick={() => signOut()}
-            className="text-xs font-semibold text-pink hover:underline"
-          >
+          <button onClick={() => signOut()} className="text-xs font-semibold text-pink hover:underline">
             Sair
           </button>
         </div>
