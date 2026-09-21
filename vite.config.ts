@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Fluxo — Gestão Financeira',
-        short_name: 'Fluxo',
+        name: 'Amorim — Gestão Financeira',
+        short_name: 'Amorim',
         description: 'Gestão financeira pessoal simples e inteligente.',
         theme_color: '#0a0a0b',
         background_color: '#0a0a0b',

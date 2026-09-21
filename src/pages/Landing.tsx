@@ -52,16 +52,16 @@ export default function Landing() {
       <section className="relative overflow-hidden px-4 pb-24 pt-16 md:px-8 md:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl">
-            Cuide da sua grana
+            Sua vida financeira,
             <br />
-            sem perder tempo com
+            organizada com
             <br />
-            <span className="text-teal">planilha</span>
+            <span className="text-teal">carinho</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-balance text-base text-muted md:text-lg">
-            Registre receitas e despesas, acompanhe metas e veja para onde seu
-            dinheiro está indo — tudo em um dashboard simples, direto no seu
-            navegador.
+            O Amorim te ajuda a registrar receitas e despesas, acompanhar
+            metas e enxergar pra onde seu dinheiro está indo — sem planilha,
+            sem complicação.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link to="/app">
@@ -114,11 +114,11 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="absolute -left-16 top-10 z-20 hidden rotate-[-6deg] items-center gap-2 whitespace-nowrap rounded-full bg-pink px-4 py-2 text-sm font-semibold text-bg shadow-xl md:flex">
-            🎯 Meta batida!
+          <div className="absolute -left-10 -top-6 z-20 hidden rotate-[-6deg] items-center gap-2 whitespace-nowrap rounded-full bg-pink px-4 py-2 text-sm font-semibold text-bg shadow-xl md:flex">
+            🔥 Streak de 7 dias
           </div>
-          <div className="absolute -right-14 bottom-16 z-20 hidden rotate-[6deg] items-center gap-2 whitespace-nowrap rounded-full bg-yellow px-4 py-2 text-sm font-semibold text-bg shadow-xl md:flex">
-            +18% economia
+          <div className="absolute -right-8 -bottom-6 z-20 hidden rotate-[6deg] items-center gap-2 whitespace-nowrap rounded-full bg-yellow px-4 py-2 text-sm font-semibold text-bg shadow-xl md:flex">
+            💰 Meta em dia
           </div>
         </div>
       </section>
@@ -175,9 +175,21 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="border-t border-border px-4 py-16 md:px-8">
+        <div className="mx-auto max-w-xl text-center">
+          <h2 className="text-lg font-semibold text-ink">Por que o Amorim existe</h2>
+          <p className="mt-3 text-sm text-muted">
+            Cansei de planilha que ninguém atualiza e de app de banco que só
+            mostra extrato. Criei o Amorim pra ter, num só lugar, uma visão
+            simples e honesta de pra onde vai o meu dinheiro — e resolvi
+            deixar aberto pra quem quiser usar também.
+          </p>
+        </div>
+      </section>
+
       <footer className="border-t border-border px-4 py-8 text-center text-xs text-subtle md:px-8">
         <Logo className="mx-auto mb-3 justify-center" />
-        Feito com dedicação para ajudar você a cuidar da sua grana.
+        Um projeto criado por Amorim, com carinho pela sua grana.
       </footer>
     </div>
   );

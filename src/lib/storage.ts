@@ -1,4 +1,4 @@
-const STORAGE_KEY = "fluxo:data:v1";
+const STORAGE_KEY = "amorim:data:v1";
 
 export function loadState<T>(fallback: T): T {
   try {

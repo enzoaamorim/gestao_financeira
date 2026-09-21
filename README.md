@@ -1,4 +1,4 @@
-# Fluxo — Gestão Financeira
+# Amorim — Gestão Financeira
 
 PWA de gestão financeira pessoal: controle de receitas e despesas, dashboard com gráficos, metas de economia, orçamento por categoria e gerenciamento de contas/cartões.
 
