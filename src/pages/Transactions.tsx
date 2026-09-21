@@ -5,6 +5,7 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { inputClass } from "../components/ui/fields";
 import { TransactionForm } from "../components/transactions/TransactionForm";
+import { RecurringManager } from "../components/transactions/RecurringManager";
 import { formatCurrency, formatDate } from "../lib/format";
 import type { Transaction } from "../lib/types";
 import clsx from "clsx";
@@ -20,6 +21,7 @@ export default function Transactions() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | undefined>(undefined);
+  const [recurringOpen, setRecurringOpen] = useState(false);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -51,7 +53,12 @@ export default function Transactions() {
           <h1 className="text-2xl font-bold">Transações</h1>
           <p className="mt-1 text-sm text-muted">{filtered.length} transações encontradas</p>
         </div>
-        <Button onClick={openNew}>+ Nova transação</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setRecurringOpen(true)}>
+            🔁 Recorrências
+          </Button>
+          <Button onClick={openNew}>+ Nova transação</Button>
+        </div>
       </div>
 
       <Card className="flex flex-wrap gap-3 !p-4">
@@ -110,7 +117,9 @@ export default function Transactions() {
                       {cat?.icon ?? "📦"}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{t.description}</p>
+                      <p className="truncate text-sm font-medium">
+                        {t.description} {t.recurringId && <span title="Recorrente">🔁</span>}
+                      </p>
                       <p className="truncate text-xs text-subtle">
                         {cat?.name} · {account?.name} · {formatDate(t.date)}
                       </p>
@@ -156,6 +165,10 @@ export default function Transactions() {
         title={editing ? "Editar transação" : "Nova transação"}
       >
         <TransactionForm initial={editing} onDone={() => setFormOpen(false)} />
+      </Modal>
+
+      <Modal open={recurringOpen} onClose={() => setRecurringOpen(false)} title="Transações recorrentes">
+        <RecurringManager />
       </Modal>
     </div>
   );

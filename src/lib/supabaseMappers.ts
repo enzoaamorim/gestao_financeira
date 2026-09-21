@@ -1,4 +1,4 @@
-import type { Account, Budget, Category, Goal, Transaction } from "./types";
+import type { Account, Budget, Category, Goal, RecurringTransaction, Transaction } from "./types";
 
 export function categoryFromRow(row: any): Category {
   return { id: row.id, name: row.name, icon: row.icon, color: row.color, type: row.type };
@@ -43,6 +43,7 @@ export function transactionFromRow(row: any): Transaction {
     categoryId: row.category_id,
     accountId: row.account_id,
     note: row.note ?? undefined,
+    recurringId: row.recurring_id ?? undefined,
   };
 }
 
@@ -55,6 +56,32 @@ export function transactionToRow(t: Omit<Transaction, "id">) {
     category_id: t.categoryId,
     account_id: t.accountId,
     note: t.note ?? null,
+    recurring_id: t.recurringId ?? null,
+  };
+}
+
+export function recurringFromRow(row: any): RecurringTransaction {
+  return {
+    id: row.id,
+    description: row.description,
+    amount: Number(row.amount),
+    type: row.type,
+    categoryId: row.category_id,
+    accountId: row.account_id,
+    dayOfMonth: row.day_of_month,
+    active: row.active,
+  };
+}
+
+export function recurringToRow(r: Omit<RecurringTransaction, "id">) {
+  return {
+    description: r.description,
+    amount: r.amount,
+    type: r.type,
+    category_id: r.categoryId,
+    account_id: r.accountId,
+    day_of_month: r.dayOfMonth,
+    active: r.active,
   };
 }
 

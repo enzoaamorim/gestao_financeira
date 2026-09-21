@@ -10,8 +10,10 @@ interface Props {
   onDone: () => void;
 }
 
+const dayOptions = Array.from({ length: 28 }, (_, i) => i + 1);
+
 export function TransactionForm({ initial, onDone }: Props) {
-  const { categories, accounts, addTransaction, updateTransaction } = useFinance();
+  const { categories, accounts, addTransaction, updateTransaction, addRecurring } = useFinance();
 
   const [type, setType] = useState<TransactionType>(initial?.type ?? "expense");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -21,6 +23,8 @@ export function TransactionForm({ initial, onDone }: Props) {
     initial?.categoryId ?? categories.find((c) => c.type === type)?.id ?? "",
   );
   const [accountId, setAccountId] = useState(initial?.accountId ?? accounts[0]?.id ?? "");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [dayOfMonth, setDayOfMonth] = useState(Math.min(new Date().getDate(), 28));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,10 +41,41 @@ export function TransactionForm({ initial, onDone }: Props) {
     const value = parseFloat(amount.replace(",", "."));
     if (!description.trim() || Number.isNaN(value) || value <= 0 || !categoryId || !accountId) return;
 
-    const payload = { description: description.trim(), amount: value, date, type, categoryId, accountId };
-
     setSubmitting(true);
     setError(null);
+
+    if (!initial && isRecurring) {
+      const recurringResult = await addRecurring({
+        description: description.trim(),
+        amount: value,
+        type,
+        categoryId,
+        accountId,
+        dayOfMonth,
+        active: true,
+      });
+      if (recurringResult.error || !recurringResult.id) {
+        setSubmitting(false);
+        setError(recurringResult.error ?? "Não foi possível criar a recorrência.");
+        return;
+      }
+      const currentMonthKey = new Date().toISOString().slice(0, 7);
+      const result = await addTransaction({
+        description: description.trim(),
+        amount: value,
+        date: `${currentMonthKey}-${String(dayOfMonth).padStart(2, "0")}`,
+        type,
+        categoryId,
+        accountId,
+        recurringId: recurringResult.id,
+      });
+      setSubmitting(false);
+      if (result.error) setError(result.error);
+      else onDone();
+      return;
+    }
+
+    const payload = { description: description.trim(), amount: value, date, type, categoryId, accountId };
     const result = initial ? await updateTransaction(initial.id, payload) : await addTransaction(payload);
     setSubmitting(false);
 
@@ -96,16 +131,33 @@ export function TransactionForm({ initial, onDone }: Props) {
             required
           />
         </div>
-        <div>
-          <label className={labelClass}>Data</label>
-          <input
-            type="date"
-            className={inputClass}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
+        {isRecurring ? (
+          <div>
+            <label className={labelClass}>Dia do mês</label>
+            <select
+              className={inputClass}
+              value={dayOfMonth}
+              onChange={(e) => setDayOfMonth(Number(e.target.value))}
+            >
+              {dayOptions.map((d) => (
+                <option key={d} value={d}>
+                  Dia {d}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label className={labelClass}>Data</label>
+            <input
+              type="date"
+              className={inputClass}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -138,6 +190,18 @@ export function TransactionForm({ initial, onDone }: Props) {
           </select>
         </div>
       </div>
+
+      {!initial && (
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-teal"
+          />
+          🔁 Repetir todo mês
+        </label>
+      )}
 
       {error && <p className="text-sm text-pink">{error}</p>}
 

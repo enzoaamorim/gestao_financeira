@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Account, Budget, Category, Goal, Transaction } from "../lib/types";
+import type { Account, Budget, Category, Goal, RecurringTransaction, Transaction } from "../lib/types";
 import { seedCategories } from "../lib/seed";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "./AuthContext";
@@ -12,6 +12,8 @@ import {
   categoryToRow,
   goalFromRow,
   goalToRow,
+  recurringFromRow,
+  recurringToRow,
   transactionFromRow,
   transactionToRow,
 } from "../lib/supabaseMappers";
@@ -26,6 +28,7 @@ interface FinanceContextValue {
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
+  recurringTransactions: RecurringTransaction[];
   loading: boolean;
   error: string | null;
   clearError: () => void;
@@ -49,6 +52,10 @@ interface FinanceContextValue {
   addGoal: (g: Omit<Goal, "id">) => Promise<MutationResult>;
   updateGoal: (id: string, g: Omit<Goal, "id">) => Promise<MutationResult>;
   deleteGoal: (id: string) => Promise<MutationResult>;
+
+  addRecurring: (r: Omit<RecurringTransaction, "id">) => Promise<{ error: string | null; id: string | null }>;
+  updateRecurring: (id: string, r: Omit<RecurringTransaction, "id">) => Promise<MutationResult>;
+  deleteRecurring: (id: string) => Promise<MutationResult>;
 
   categoryById: (id: string) => Category | undefined;
   accountById: (id: string) => AccountWithBalance | undefined;
@@ -76,6 +83,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,15 +94,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     async function load() {
       setLoading(true);
       try {
-        const [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes] = await Promise.all([
+        const [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes, recurringRes] = await Promise.all([
           supabase.from("categories").select("*").order("name"),
           supabase.from("accounts").select("*").order("created_at"),
           supabase.from("transactions").select("*").order("date", { ascending: false }),
           supabase.from("budgets").select("*"),
           supabase.from("goals").select("*"),
+          supabase.from("recurring_transactions").select("*"),
         ]);
 
-        for (const res of [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes]) {
+        for (const res of [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes, recurringRes]) {
           if (res.error) throw res.error;
         }
 
@@ -109,12 +118,42 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           loadedCategories = (seeded ?? []).map(categoryFromRow);
         }
 
+        const loadedRecurring = (recurringRes.data ?? []).map(recurringFromRow);
+        let loadedTransactions = (transactionsRes.data ?? []).map(transactionFromRow);
+
+        // Gera a transação do mês atual para cada recorrência ativa que ainda não tem uma.
+        const currentMonthKey = new Date().toISOString().slice(0, 7);
+        const due = loadedRecurring.filter(
+          (r) =>
+            r.active &&
+            !loadedTransactions.some((t) => t.recurringId === r.id && t.date.startsWith(currentMonthKey)),
+        );
+
+        if (due.length > 0) {
+          const rows = due.map((r) =>
+            transactionToRow({
+              description: r.description,
+              amount: r.amount,
+              type: r.type,
+              categoryId: r.categoryId,
+              accountId: r.accountId,
+              date: `${currentMonthKey}-${String(r.dayOfMonth).padStart(2, "0")}`,
+              recurringId: r.id,
+            }),
+          );
+          const { data: generated, error: genError } = await supabase.from("transactions").insert(rows).select();
+          if (!genError && generated) {
+            loadedTransactions = [...generated.map(transactionFromRow), ...loadedTransactions];
+          }
+        }
+
         if (cancelled) return;
         setCategories(loadedCategories);
         setAccounts((accountsRes.data ?? []).map(accountFromRow));
-        setTransactions((transactionsRes.data ?? []).map(transactionFromRow));
+        setTransactions(loadedTransactions);
         setBudgets((budgetsRes.data ?? []).map(budgetFromRow));
         setGoals((goalsRes.data ?? []).map(goalFromRow));
+        setRecurringTransactions(loadedRecurring);
         setError(null);
       } catch (err) {
         if (!cancelled) setError(friendlyError(err));
@@ -367,12 +406,62 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    async function addRecurring(r: Omit<RecurringTransaction, "id">) {
+      try {
+        const { data, error: err } = await supabase
+          .from("recurring_transactions")
+          .insert(recurringToRow(r))
+          .select()
+          .single();
+        if (err) throw err;
+        const created = recurringFromRow(data);
+        setRecurringTransactions((prev) => [...prev, created]);
+        return { error: null, id: created.id };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message, id: null };
+      }
+    }
+
+    async function updateRecurring(id: string, r: Omit<RecurringTransaction, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("recurring_transactions")
+          .update(recurringToRow(r))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setRecurringTransactions((prev) => prev.map((rec) => (rec.id === id ? recurringFromRow(data) : rec)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteRecurring(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("recurring_transactions").delete().eq("id", id);
+        if (err) throw err;
+        setRecurringTransactions((prev) => prev.filter((rec) => rec.id !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
     return {
       categories,
       accounts: accountsWithBalance,
       transactions,
       budgets,
       goals,
+      recurringTransactions,
       loading,
       error,
       clearError: () => setError(null),
@@ -393,11 +482,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       addGoal,
       updateGoal,
       deleteGoal,
+      addRecurring,
+      updateRecurring,
+      deleteRecurring,
 
       categoryById: (id) => categories.find((c) => c.id === id),
       accountById: (id) => accountsWithBalance.find((a) => a.id === id),
     };
-  }, [categories, accountsWithBalance, transactions, budgets, goals, loading, error]);
+  }, [categories, accountsWithBalance, transactions, budgets, goals, recurringTransactions, loading, error]);
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 }

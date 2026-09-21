@@ -32,6 +32,20 @@ export interface Transaction {
   categoryId: string;
   accountId: string;
   note?: string;
+  /** Set when this transaction was auto-generated from a recurring rule. */
+  recurringId?: string;
+}
+
+export interface RecurringTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  categoryId: string;
+  accountId: string;
+  /** 1-28, to stay valid in every month. */
+  dayOfMonth: number;
+  active: boolean;
 }
 
 export type BudgetPeriod = "monthly";
