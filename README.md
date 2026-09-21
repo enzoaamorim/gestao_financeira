@@ -1,6 +1,6 @@
-# Amorim — Gestão Financeira
+# Amorim
 
-PWA de gestão financeira pessoal: controle de receitas e despesas, dashboard com gráficos, metas de economia, orçamento por categoria e gerenciamento de contas/cartões.
+PWA pessoal com dois módulos: **Finanças** (receitas, despesas, contas, orçamento e metas) e **Treino** (rotinas, registro de treino, biblioteca de exercícios e progressão de carga), com um seletor pra trocar entre eles.
 
 ## Stack
 
@@ -24,10 +24,11 @@ O app precisa de um projeto Supabase próprio para autenticação e armazenament
    cp .env.example .env
    ```
    e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores copiados.
-4. No painel do Supabase, abra o **SQL Editor**, cole todo o conteúdo do arquivo [`supabase/schema.sql`](./supabase/schema.sql) deste repositório e clique em **Run**. Isso cria as tabelas (`accounts`, `categories`, `transactions`, `budgets`, `goals`) já com as políticas de segurança (RLS) que garantem que cada usuário só acessa os próprios dados.
-5. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
+4. No painel do Supabase, abra o **SQL Editor**, cole todo o conteúdo do arquivo [`supabase/schema.sql`](./supabase/schema.sql) deste repositório e clique em **Run**. Isso cria as tabelas do módulo financeiro (`accounts`, `categories`, `transactions`, `budgets`, `goals`) já com as políticas de segurança (RLS) que garantem que cada usuário só acessa os próprios dados.
+5. Ainda no **SQL Editor**, rode também o [`supabase/schema_fitness.sql`](./supabase/schema_fitness.sql) — cria as tabelas do módulo de treino (`exercises`, `routines`, `routine_exercises`, `workout_sessions`, `workout_sets`) e já popula a biblioteca padrão de exercícios.
+6. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
 
-Pronto — ao rodar o app e criar uma conta pela tela de login, as categorias padrão são criadas automaticamente no primeiro acesso.
+Pronto — ao rodar o app e criar uma conta pela tela de login, as categorias padrão (Finanças) já ficam disponíveis, e a biblioteca de exercícios (Treino) também.
 
 ## Rodando localmente
 
@@ -45,12 +46,15 @@ npm run preview
 
 ## Estrutura
 
-- `src/pages` — telas (Landing, Login, Dashboard, Transações, Contas, Metas)
+- `src/pages` — telas do módulo Finanças (Landing, Login, Dashboard, Transações, Contas, Metas, Categorias)
+- `src/pages/fitness` — telas do módulo Treino (Dashboard, Registrar treino, Rotinas, Exercícios)
 - `src/components` — componentes de UI e formulários
 - `src/context/AuthContext.tsx` — sessão e autenticação (Supabase Auth)
-- `src/context/FinanceContext.tsx` — dados financeiros (Supabase Postgres)
-- `src/lib` — tipos, categorias padrão e utilitários
-- `supabase/schema.sql` — schema do banco (tabelas + RLS)
+- `src/context/FinanceContext.tsx` — dados do módulo Finanças (Supabase Postgres)
+- `src/context/WorkoutContext.tsx` — dados do módulo Treino (Supabase Postgres)
+- `src/lib` — tipos, dados padrão e utilitários
+- `supabase/schema.sql` — schema do módulo Finanças (tabelas + RLS)
+- `supabase/schema_fitness.sql` — schema do módulo Treino (tabelas + RLS)
 
 ## Offline
 
