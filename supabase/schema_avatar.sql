@@ -5,7 +5,9 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
-alter table storage.objects enable row level security;
+-- storage.objects já vem com RLS ativado por padrão em todo projeto Supabase,
+-- e essa tabela pertence a um papel interno do sistema — por isso não
+-- rodamos "alter table ... enable row level security" aqui, só as políticas.
 
 drop policy if exists "avatars_public_read" on storage.objects;
 create policy "avatars_public_read" on storage.objects
