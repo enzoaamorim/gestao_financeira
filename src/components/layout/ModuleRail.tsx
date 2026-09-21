@@ -4,6 +4,7 @@ import clsx from "clsx";
 const modules = [
   { to: "/app", icon: "💰", label: "Finanças" },
   { to: "/treino", icon: "💪", label: "Treino" },
+  { to: "/habitos", icon: "✅", label: "Hábitos" },
 ];
 
 export function ModuleRail() {

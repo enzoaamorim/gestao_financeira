@@ -3,6 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import { DEFAULT_ACCENT } from "../lib/accentColors";
 
+const DEFAULT_WATER_GOAL_ML = 2000;
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
@@ -18,6 +20,8 @@ interface AuthContextValue {
   updateEmail: (newEmail: string) => Promise<{ error: string | null }>;
   accentColor: string;
   updateAccentColor: (hex: string) => Promise<{ error: string | null }>;
+  waterGoalMl: number;
+  updateWaterGoal: (ml: number) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -98,6 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }
 
+  const waterGoalMl =
+    (session?.user.user_metadata as { water_goal_ml?: number } | undefined)?.water_goal_ml ?? DEFAULT_WATER_GOAL_ML;
+
+  async function updateWaterGoal(ml: number) {
+    const { error } = await supabase.auth.updateUser({ data: { water_goal_ml: ml } });
+    return { error: error?.message ?? null };
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -114,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateEmail,
         accentColor,
         updateAccentColor,
+        waterGoalMl,
+        updateWaterGoal,
       }}
     >
       {children}

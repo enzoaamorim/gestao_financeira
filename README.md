@@ -1,6 +1,6 @@
 # Amorim
 
-PWA pessoal com dois módulos: **Finanças** (receitas, despesas, contas, orçamento e metas) e **Treino** (rotinas, registro de treino, biblioteca de exercícios e progressão de carga), com um seletor pra trocar entre eles.
+PWA pessoal com três módulos: **Finanças** (receitas, despesas, contas, orçamento e metas), **Treino** (rotinas, registro de treino, biblioteca de exercícios e progressão de carga) e **Hábitos** (checklist diário de hábitos com sequência de dias e meta de água), com um seletor pra trocar entre eles.
 
 ## Stack
 
@@ -28,7 +28,8 @@ O app precisa de um projeto Supabase próprio para autenticação e armazenament
 5. Ainda no **SQL Editor**, rode também o [`supabase/schema_fitness.sql`](./supabase/schema_fitness.sql) — cria as tabelas do módulo de treino (`exercises`, `routines`, `routine_exercises`, `workout_sessions`, `workout_sets`) e já popula a biblioteca padrão de exercícios.
 6. Rode também o [`supabase/schema_avatar.sql`](./supabase/schema_avatar.sql) — cria o bucket de armazenamento `avatars` (pra foto de perfil) com as políticas de acesso.
 7. Rode também o [`supabase/schema_recurring.sql`](./supabase/schema_recurring.sql) — cria a tabela de transações recorrentes (assinaturas, aluguel, salário, etc).
-8. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
+8. Rode também o [`supabase/schema_habits.sql`](./supabase/schema_habits.sql) — cria as tabelas do módulo de Hábitos (`habits`, `habit_logs`, `water_logs`).
+9. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
 
 Pronto — ao rodar o app e criar uma conta pela tela de login, as categorias padrão (Finanças) já ficam disponíveis, e a biblioteca de exercícios (Treino) também.
 
@@ -50,15 +51,18 @@ npm run preview
 
 - `src/pages` — telas do módulo Finanças (Landing, Login, Dashboard, Transações, Contas, Metas, Categorias)
 - `src/pages/fitness` — telas do módulo Treino (Dashboard, Registrar treino, Rotinas, Exercícios)
+- `src/pages/habits` — tela do módulo Hábitos (Dashboard: checklist diário + meta de água)
 - `src/components` — componentes de UI e formulários
 - `src/context/AuthContext.tsx` — sessão e autenticação (Supabase Auth)
 - `src/context/FinanceContext.tsx` — dados do módulo Finanças (Supabase Postgres)
 - `src/context/WorkoutContext.tsx` — dados do módulo Treino (Supabase Postgres)
+- `src/context/HabitsContext.tsx` — dados do módulo Hábitos (Supabase Postgres)
 - `src/lib` — tipos, dados padrão e utilitários
 - `supabase/schema.sql` — schema do módulo Finanças (tabelas + RLS)
 - `supabase/schema_fitness.sql` — schema do módulo Treino (tabelas + RLS)
 - `supabase/schema_avatar.sql` — bucket de storage para foto de perfil
 - `supabase/schema_recurring.sql` — transações recorrentes (assinaturas, aluguel, etc)
+- `supabase/schema_habits.sql` — schema do módulo Hábitos (tabelas + RLS)
 
 ## Offline
 

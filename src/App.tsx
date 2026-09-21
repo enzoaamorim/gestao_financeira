@@ -2,9 +2,11 @@ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { FinanceProvider } from "./context/FinanceContext";
 import { WorkoutProvider } from "./context/WorkoutContext";
+import { HabitsProvider } from "./context/HabitsContext";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
 import { FitnessLayout } from "./components/layout/FitnessLayout";
+import { HabitsLayout } from "./components/layout/HabitsLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -18,6 +20,7 @@ import FitnessDashboard from "./pages/fitness/FitnessDashboard";
 import LogWorkout from "./pages/fitness/LogWorkout";
 import Routines from "./pages/fitness/Routines";
 import Exercises from "./pages/fitness/Exercises";
+import HabitsDashboard from "./pages/habits/HabitsDashboard";
 
 function App() {
   return (
@@ -64,6 +67,18 @@ function App() {
           <Route path="registrar" element={<LogWorkout />} />
           <Route path="rotinas" element={<Routines />} />
           <Route path="exercicios" element={<Exercises />} />
+        </Route>
+        <Route
+          path="/habitos"
+          element={
+            <RequireAuth>
+              <HabitsProvider>
+                <HabitsLayout />
+              </HabitsProvider>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<HabitsDashboard />} />
         </Route>
       </Routes>
     </AuthProvider>
