@@ -13,6 +13,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
+  updateAvatar: (file: File) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -64,6 +65,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }
 
+  async function updateAvatar(file: File) {
+    const currentUser = session?.user;
+    if (!currentUser) return { error: "Você precisa estar logado." };
+
+    const path = `${currentUser.id}/avatar`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, cacheControl: "3600" });
+    if (uploadError) return { error: uploadError.message };
+
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: { avatar_url: `${data.publicUrl}?t=${Date.now()}` },
+    });
+    return { error: updateError?.message ?? null };
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -76,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         sendPasswordReset,
         updatePassword,
+        updateAvatar,
       }}
     >
       {children}

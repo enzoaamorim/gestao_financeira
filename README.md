@@ -26,7 +26,8 @@ O app precisa de um projeto Supabase próprio para autenticação e armazenament
    e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores copiados.
 4. No painel do Supabase, abra o **SQL Editor**, cole todo o conteúdo do arquivo [`supabase/schema.sql`](./supabase/schema.sql) deste repositório e clique em **Run**. Isso cria as tabelas do módulo financeiro (`accounts`, `categories`, `transactions`, `budgets`, `goals`) já com as políticas de segurança (RLS) que garantem que cada usuário só acessa os próprios dados.
 5. Ainda no **SQL Editor**, rode também o [`supabase/schema_fitness.sql`](./supabase/schema_fitness.sql) — cria as tabelas do módulo de treino (`exercises`, `routines`, `routine_exercises`, `workout_sessions`, `workout_sets`) e já popula a biblioteca padrão de exercícios.
-6. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
+6. Rode também o [`supabase/schema_avatar.sql`](./supabase/schema_avatar.sql) — cria o bucket de armazenamento `avatars` (pra foto de perfil) com as políticas de acesso.
+7. (Opcional, recomendado em desenvolvimento) Em **Authentication > Sign In / Providers > Email**, desative a exigência de confirmação por e-mail (**Confirm email**) para poder testar login logo após criar a conta, sem precisar clicar no link enviado por e-mail.
 
 Pronto — ao rodar o app e criar uma conta pela tela de login, as categorias padrão (Finanças) já ficam disponíveis, e a biblioteca de exercícios (Treino) também.
 
@@ -55,6 +56,7 @@ npm run preview
 - `src/lib` — tipos, dados padrão e utilitários
 - `supabase/schema.sql` — schema do módulo Finanças (tabelas + RLS)
 - `supabase/schema_fitness.sql` — schema do módulo Treino (tabelas + RLS)
+- `supabase/schema_avatar.sql` — bucket de storage para foto de perfil
 
 ## Offline
 

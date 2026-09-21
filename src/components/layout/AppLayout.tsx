@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import clsx from "clsx";
 import { Logo } from "../ui/Logo";
 import { ModuleSwitcher } from "./ModuleSwitcher";
+import { SidebarUserCard } from "./SidebarUserCard";
+import { AvatarUploader } from "./AvatarUploader";
 import { useAuth } from "../../context/AuthContext";
 import { useFinance } from "../../context/FinanceContext";
 
@@ -14,7 +16,7 @@ const navItems = [
 ];
 
 export function AppLayout() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const { loading, error, clearError } = useFinance();
 
   return (
@@ -44,26 +46,19 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="space-y-3 rounded-2xl border border-border bg-surface-2 p-4">
-          <p className="truncate text-xs text-muted" title={user?.email}>
-            {user?.email}
-          </p>
-          <button
-            onClick={() => signOut()}
-            className="text-xs font-semibold text-pink hover:underline"
-          >
-            Sair
-          </button>
-        </div>
+        <SidebarUserCard />
       </aside>
 
       <div className="flex-1">
         <header className="border-b border-border bg-surface px-4 py-3 md:hidden">
           <div className="mb-3 flex items-center justify-between">
             <Logo />
-            <button onClick={() => signOut()} className="text-xs font-semibold text-pink">
-              Sair
-            </button>
+            <div className="flex items-center gap-3">
+              <AvatarUploader size="sm" />
+              <button onClick={() => signOut()} className="text-xs font-semibold text-pink">
+                Sair
+              </button>
+            </div>
           </div>
           <ModuleSwitcher />
         </header>
