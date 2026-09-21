@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useWorkout } from "../../context/WorkoutContext";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { RestTimer } from "../../components/fitness/RestTimer";
 import { inputClass, labelClass } from "../../components/ui/fields";
 import { formatDate } from "../../lib/format";
+import type { WorkoutSession } from "../../lib/fitnessTypes";
 import clsx from "clsx";
 
 interface DraftSet {
@@ -28,6 +30,7 @@ export default function LogWorkout() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<WorkoutSession | undefined>(undefined);
 
   function applyRoutine(id: string) {
     setRoutineId(id);
@@ -260,7 +263,7 @@ export default function LogWorkout() {
                     </p>
                   </div>
                   <button
-                    onClick={() => deleteSession(s.id)}
+                    onClick={() => setDeleteTarget(s)}
                     className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                     aria-label="Excluir"
                   >
@@ -272,6 +275,14 @@ export default function LogWorkout() {
           </div>
         )}
       </Card>
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir treino"
+        description={`Tem certeza que deseja excluir o treino de ${deleteTarget ? formatDate(deleteTarget.date) : ""}? Todas as séries registradas nele também serão excluídas.`}
+        onConfirm={() => deleteSession(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }

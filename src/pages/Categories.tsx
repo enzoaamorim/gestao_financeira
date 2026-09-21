@@ -3,6 +3,7 @@ import { useFinance } from "../context/FinanceContext";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { CategoryForm } from "../components/categories/CategoryForm";
 import type { Category, TransactionType } from "../lib/types";
 
@@ -11,6 +12,7 @@ export default function Categories() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | undefined>(undefined);
   const [newType, setNewType] = useState<TransactionType>("expense");
+  const [deleteTarget, setDeleteTarget] = useState<Category | undefined>(undefined);
 
   const income = categories.filter((c) => c.type === "income");
   const expense = categories.filter((c) => c.type === "expense");
@@ -62,7 +64,7 @@ export default function Categories() {
                     ✎
                   </button>
                   <button
-                    onClick={() => deleteCategory(c.id)}
+                    onClick={() => setDeleteTarget(c)}
                     className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                     aria-label="Excluir"
                   >
@@ -96,6 +98,14 @@ export default function Categories() {
       >
         <CategoryForm initial={editing} defaultType={newType} onDone={() => setFormOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir categoria"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteCategory(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }

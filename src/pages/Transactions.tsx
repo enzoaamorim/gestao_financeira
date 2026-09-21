@@ -3,6 +3,7 @@ import { useFinance } from "../context/FinanceContext";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { inputClass } from "../components/ui/fields";
 import { TransactionForm } from "../components/transactions/TransactionForm";
 import { RecurringManager } from "../components/transactions/RecurringManager";
@@ -22,6 +23,7 @@ export default function Transactions() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | undefined>(undefined);
   const [recurringOpen, setRecurringOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Transaction | undefined>(undefined);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -144,7 +146,7 @@ export default function Transactions() {
                         ✎
                       </button>
                       <button
-                        onClick={() => deleteTransaction(t.id)}
+                        onClick={() => setDeleteTarget(t)}
                         className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                         aria-label="Excluir"
                       >
@@ -170,6 +172,14 @@ export default function Transactions() {
       <Modal open={recurringOpen} onClose={() => setRecurringOpen(false)} title="Transações recorrentes">
         <RecurringManager />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir transação"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.description}"? Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteTransaction(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useFinance, type AccountWithBalance } from "../context/FinanceContext";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { AccountForm } from "../components/accounts/AccountForm";
 import { formatCurrency } from "../lib/format";
@@ -19,6 +20,7 @@ export default function Accounts() {
   const { accounts, deleteAccount } = useFinance();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AccountWithBalance | undefined>(undefined);
+  const [deleteTarget, setDeleteTarget] = useState<AccountWithBalance | undefined>(undefined);
 
   function openNew() {
     setEditing(undefined);
@@ -64,7 +66,7 @@ export default function Accounts() {
                     ✎
                   </button>
                   <button
-                    onClick={() => deleteAccount(a.id)}
+                    onClick={() => setDeleteTarget(a)}
                     className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                     aria-label="Excluir"
                   >
@@ -100,6 +102,14 @@ export default function Accounts() {
       >
         <AccountForm initial={editing} onDone={() => setFormOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir conta"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? As transações associadas a ela também serão excluídas. Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteAccount(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }

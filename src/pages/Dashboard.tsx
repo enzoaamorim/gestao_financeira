@@ -170,6 +170,9 @@ export default function Dashboard() {
 
       <Card>
         <p className="mb-4 text-sm font-semibold">Últimas transações</p>
+        {recentTransactions.length === 0 ? (
+          <p className="py-10 text-center text-sm text-subtle">Nenhuma transação registrada ainda.</p>
+        ) : (
         <div className="space-y-3">
           {recentTransactions.map((t) => {
             const cat = categories.find((c) => c.id === t.categoryId);
@@ -194,6 +197,7 @@ export default function Dashboard() {
             );
           })}
         </div>
+        )}
       </Card>
     </div>
   );

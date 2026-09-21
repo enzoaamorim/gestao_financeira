@@ -3,6 +3,7 @@ import { useWorkout } from "../../context/WorkoutContext";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { inputClass } from "../../components/ui/fields";
 import { ExerciseForm } from "../../components/fitness/ExerciseForm";
 import type { Exercise } from "../../lib/fitnessTypes";
@@ -15,6 +16,7 @@ export default function Exercises() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | undefined>(undefined);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Exercise | undefined>(undefined);
 
   const muscleGroups = useMemo(
     () => Array.from(new Set(exercises.map((e) => e.muscleGroup))).sort(),
@@ -95,7 +97,7 @@ export default function Exercises() {
                       ✎
                     </button>
                     <button
-                      onClick={() => deleteExercise(e.id)}
+                      onClick={() => setDeleteTarget(e)}
                       className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                       aria-label="Excluir"
                     >
@@ -119,6 +121,14 @@ export default function Exercises() {
       >
         <ExerciseForm initial={editing} onDone={() => setFormOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir exercício"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Só é possível excluir exercícios que não estejam em uso em rotinas ou treinos registrados.`}
+        onConfirm={() => deleteExercise(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }

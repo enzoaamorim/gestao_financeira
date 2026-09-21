@@ -3,9 +3,10 @@ import { useWorkout } from "../../context/WorkoutContext";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { RoutineForm } from "../../components/fitness/RoutineForm";
 import { AddRoutineExerciseForm } from "../../components/fitness/AddRoutineExerciseForm";
-import type { Routine } from "../../lib/fitnessTypes";
+import type { Routine, RoutineExercise } from "../../lib/fitnessTypes";
 
 export default function Routines() {
   const { routines, routineExercises, exerciseById, deleteRoutine, deleteRoutineExercise } = useWorkout();
@@ -14,6 +15,8 @@ export default function Routines() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Routine | undefined>(undefined);
   const [addExerciseFor, setAddExerciseFor] = useState<string | null>(null);
+  const [deleteRoutineTarget, setDeleteRoutineTarget] = useState<Routine | undefined>(undefined);
+  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<RoutineExercise | undefined>(undefined);
 
   function openNew() {
     setEditing(undefined);
@@ -80,7 +83,7 @@ export default function Routines() {
                                 {re.targetSets}x{re.targetReps}
                               </span>
                               <button
-                                onClick={() => deleteRoutineExercise(re.id)}
+                                onClick={() => setDeleteExerciseTarget(re)}
                                 className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                                 aria-label="Remover"
                               >
@@ -99,7 +102,7 @@ export default function Routines() {
                       <Button size="sm" variant="secondary" onClick={() => openEdit(r)}>
                         ✎ Renomear
                       </Button>
-                      <Button size="sm" variant="danger" onClick={() => deleteRoutine(r.id)}>
+                      <Button size="sm" variant="danger" onClick={() => setDeleteRoutineTarget(r)}>
                         Excluir rotina
                       </Button>
                     </div>
@@ -124,6 +127,23 @@ export default function Routines() {
           />
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={deleteRoutineTarget !== undefined}
+        title="Excluir rotina"
+        description={`Tem certeza que deseja excluir "${deleteRoutineTarget?.name}"? Todos os exercícios dessa rotina também serão removidos. Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteRoutine(deleteRoutineTarget!.id)}
+        onCancel={() => setDeleteRoutineTarget(undefined)}
+      />
+
+      <ConfirmDialog
+        open={deleteExerciseTarget !== undefined}
+        title="Remover exercício"
+        description="Tem certeza que deseja remover esse exercício da rotina?"
+        confirmLabel="Remover"
+        onConfirm={() => deleteRoutineExercise(deleteExerciseTarget!.id)}
+        onCancel={() => setDeleteExerciseTarget(undefined)}
+      />
     </div>
   );
 }

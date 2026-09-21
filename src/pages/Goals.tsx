@@ -3,6 +3,7 @@ import { useFinance } from "../context/FinanceContext";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { BudgetForm } from "../components/budgets/BudgetForm";
 import { GoalForm } from "../components/goals/GoalForm";
@@ -17,6 +18,9 @@ export default function Goals() {
 
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
+
+  const [deleteBudgetTarget, setDeleteBudgetTarget] = useState<Budget | undefined>(undefined);
+  const [deleteGoalTarget, setDeleteGoalTarget] = useState<Goal | undefined>(undefined);
 
   const currentMonthKey = new Date().toISOString().slice(0, 7);
 
@@ -83,7 +87,7 @@ export default function Goals() {
                         ✎
                       </button>
                       <button
-                        onClick={() => deleteBudget(b.id)}
+                        onClick={() => setDeleteBudgetTarget(b)}
                         className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                       >
                         🗑
@@ -152,7 +156,7 @@ export default function Goals() {
                         ✎
                       </button>
                       <button
-                        onClick={() => deleteGoal(g.id)}
+                        onClick={() => setDeleteGoalTarget(g)}
                         className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                       >
                         🗑
@@ -188,6 +192,22 @@ export default function Goals() {
       >
         <GoalForm initial={editingGoal} onDone={() => setGoalFormOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteBudgetTarget !== undefined}
+        title="Excluir orçamento"
+        description={`Tem certeza que deseja excluir o orçamento "${deleteBudgetTarget?.name}"? Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteBudget(deleteBudgetTarget!.id)}
+        onCancel={() => setDeleteBudgetTarget(undefined)}
+      />
+
+      <ConfirmDialog
+        open={deleteGoalTarget !== undefined}
+        title="Excluir meta"
+        description={`Tem certeza que deseja excluir a meta "${deleteGoalTarget?.name}"? Essa ação não pode ser desfeita.`}
+        onConfirm={() => deleteGoal(deleteGoalTarget!.id)}
+        onCancel={() => setDeleteGoalTarget(undefined)}
+      />
     </div>
   );
 }

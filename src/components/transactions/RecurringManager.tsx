@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useFinance } from "../../context/FinanceContext";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import type { RecurringTransaction } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 import clsx from "clsx";
 
 export function RecurringManager() {
   const { recurringTransactions, categoryById, accountById, updateRecurring, deleteRecurring } = useFinance();
+  const [deleteTarget, setDeleteTarget] = useState<RecurringTransaction | undefined>(undefined);
 
   if (recurringTransactions.length === 0) {
     return <p className="text-sm text-subtle">Nenhuma transação recorrente ainda.</p>;
@@ -59,7 +62,7 @@ export function RecurringManager() {
                 {r.active ? "⏸" : "▶"}
               </button>
               <button
-                onClick={() => deleteRecurring(r.id)}
+                onClick={() => setDeleteTarget(r)}
                 className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
                 aria-label="Excluir"
               >
@@ -69,6 +72,14 @@ export function RecurringManager() {
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="Excluir recorrência"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.description}"? As transações já geradas não serão apagadas, mas nenhuma nova será criada.`}
+        onConfirm={() => deleteRecurring(deleteTarget!.id)}
+        onCancel={() => setDeleteTarget(undefined)}
+      />
     </div>
   );
 }
