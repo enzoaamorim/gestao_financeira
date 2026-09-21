@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import clsx from "clsx";
 import { Logo } from "../ui/Logo";
 import { ModuleSwitcher } from "./ModuleSwitcher";
@@ -41,8 +41,13 @@ export function AppLayout() {
                 )
               }
             >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <span className="text-base">{item.icon}</span>
+                  {item.label}
+                  {isActive && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand" />}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -55,6 +60,9 @@ export function AppLayout() {
             <Logo />
             <div className="flex items-center gap-3">
               <AvatarUploader size="sm" />
+              <Link to="/configuracoes" className="text-lg" aria-label="Configurações">
+                ⚙️
+              </Link>
               <button onClick={() => signOut()} className="text-xs font-semibold text-pink">
                 Sair
               </button>

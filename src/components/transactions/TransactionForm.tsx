@@ -197,7 +197,7 @@ export function TransactionForm({ initial, onDone }: Props) {
             type="checkbox"
             checked={isRecurring}
             onChange={(e) => setIsRecurring(e.target.checked)}
-            className="h-4 w-4 rounded border-border accent-teal"
+            className="h-4 w-4 rounded border-border accent-brand"
           />
           🔁 Repetir todo mês
         </label>

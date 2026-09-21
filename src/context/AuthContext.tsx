@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
+import { DEFAULT_ACCENT } from "../lib/accentColors";
 
 interface AuthContextValue {
   session: Session | null;
@@ -14,6 +15,9 @@ interface AuthContextValue {
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
   updateAvatar: (file: File) => Promise<{ error: string | null }>;
+  updateEmail: (newEmail: string) => Promise<{ error: string | null }>;
+  accentColor: string;
+  updateAccentColor: (hex: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -82,6 +86,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: updateError?.message ?? null };
   }
 
+  async function updateEmail(newEmail: string) {
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    return { error: error?.message ?? null };
+  }
+
+  const accentColor = (session?.user.user_metadata as { accent_color?: string } | undefined)?.accent_color ?? DEFAULT_ACCENT;
+
+  async function updateAccentColor(hex: string) {
+    const { error } = await supabase.auth.updateUser({ data: { accent_color: hex } });
+    return { error: error?.message ?? null };
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -95,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sendPasswordReset,
         updatePassword,
         updateAvatar,
+        updateEmail,
+        accentColor,
+        updateAccentColor,
       }}
     >
       {children}

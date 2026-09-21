@@ -18,6 +18,9 @@
   --color-teal: #3ed9b0;
   --color-violet: #8b7bf7;
 
+  /* User-customizable accent — overridden at runtime via inline style on :root. */
+  --color-brand: var(--brand, #3ed9b0);
+
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.75rem;
 }

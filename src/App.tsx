@@ -13,6 +13,7 @@ import Transactions from "./pages/Transactions";
 import Accounts from "./pages/Accounts";
 import Goals from "./pages/Goals";
 import Categories from "./pages/Categories";
+import Settings from "./pages/Settings";
 import FitnessDashboard from "./pages/fitness/FitnessDashboard";
 import LogWorkout from "./pages/fitness/LogWorkout";
 import Routines from "./pages/fitness/Routines";
@@ -25,6 +26,14 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/configuracoes"
+          element={
+            <RequireAuth>
+              <Settings />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/app"
           element={

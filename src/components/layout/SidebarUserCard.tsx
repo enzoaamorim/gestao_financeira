@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AvatarUploader } from "./AvatarUploader";
 
@@ -12,9 +13,14 @@ export function SidebarUserCard() {
           {user?.email}
         </p>
       </div>
-      <button onClick={() => signOut()} className="text-xs font-semibold text-pink hover:underline">
-        Sair
-      </button>
+      <div className="flex items-center justify-between">
+        <Link to="/configuracoes" className="text-xs font-semibold text-muted hover:text-ink">
+          ⚙️ Configurações
+        </Link>
+        <button onClick={() => signOut()} className="text-xs font-semibold text-pink hover:underline">
+          Sair
+        </button>
+      </div>
     </div>
   );
 }

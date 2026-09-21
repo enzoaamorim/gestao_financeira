@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWorkout } from "../../context/WorkoutContext";
+import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/ui/Card";
 import { inputClass } from "../../components/ui/fields";
 import { formatDate } from "../../lib/format";
@@ -33,6 +34,7 @@ function computeStreak(dates: string[]): number {
 
 export default function FitnessDashboard() {
   const { sessions, sets, exercises, exerciseById } = useWorkout();
+  const { accentColor } = useAuth();
 
   const exercisesWithData = useMemo(
     () => exercises.filter((ex) => sets.some((s) => s.exerciseId === ex.id)),
@@ -124,7 +126,7 @@ export default function FitnessDashboard() {
                   contentStyle={{ background: "#1b1b1f", border: "1px solid #26262b", borderRadius: 12 }}
                   formatter={(v) => [`${Number(v)} kg`, exerciseById(activeExerciseId)?.name ?? ""]}
                 />
-                <Line type="monotone" dataKey="weight" stroke="#3ed9b0" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="weight" stroke={accentColor} strokeWidth={2} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
