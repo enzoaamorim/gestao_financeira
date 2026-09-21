@@ -1,0 +1,75 @@
+import { NavLink, Outlet } from "react-router-dom";
+import clsx from "clsx";
+import { Logo } from "../ui/Logo";
+
+const navItems = [
+  { to: "/app", label: "Dashboard", icon: "📊", end: true },
+  { to: "/app/transacoes", label: "Transações", icon: "💸" },
+  { to: "/app/contas", label: "Contas e cartões", icon: "🏦" },
+  { to: "/app/metas", label: "Metas e orçamento", icon: "🎯" },
+];
+
+export function AppLayout() {
+  return (
+    <div className="flex min-h-screen bg-bg text-ink">
+      <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-surface px-4 py-6 md:flex">
+        <NavLink to="/" className="mb-8 px-2">
+          <Logo />
+        </NavLink>
+        <nav className="flex flex-1 flex-col gap-1">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-surface-2 text-ink"
+                    : "text-muted hover:bg-surface-2/60 hover:text-ink",
+                )
+              }
+            >
+              <span className="text-base">{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="rounded-2xl border border-border bg-surface-2 p-4">
+          <p className="text-xs text-muted">
+            Seus dados ficam salvos apenas neste dispositivo (localStorage).
+          </p>
+        </div>
+      </aside>
+
+      <div className="flex-1">
+        <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
+          <Logo />
+        </header>
+        <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
+          <Outlet />
+        </main>
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-border bg-surface py-2 md:hidden">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                clsx(
+                  "flex flex-col items-center gap-0.5 px-3 py-1 text-[11px] font-medium",
+                  isActive ? "text-ink" : "text-subtle",
+                )
+              }
+            >
+              <span className="text-lg">{item.icon}</span>
+              {item.label.split(" ")[0]}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="h-16 md:hidden" />
+      </div>
+    </div>
+  );
+}
