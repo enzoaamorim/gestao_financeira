@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import clsx from "clsx";
 import { Logo } from "../ui/Logo";
 import { ModuleSwitcher } from "./ModuleSwitcher";
+import { ModuleRail } from "./ModuleRail";
 import { SidebarUserCard } from "./SidebarUserCard";
 import { AvatarUploader } from "./AvatarUploader";
 import { useAuth } from "../../context/AuthContext";
@@ -21,11 +22,12 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen bg-bg text-ink">
-      <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-surface px-4 py-6 md:flex">
-        <NavLink to="/" className="mb-6 px-2">
-          <Logo />
-        </NavLink>
-        <ModuleSwitcher />
+      <ModuleRail />
+      <aside className="sticky top-0 hidden h-screen w-48 flex-shrink-0 flex-col border-r border-border bg-surface px-3 py-6 md:flex">
+        <div className="mb-6 flex items-center gap-2 px-2">
+          <span className="text-base">💰</span>
+          <span className="text-sm font-bold">Finanças</span>
+        </div>
         <nav className="flex flex-1 flex-col gap-1">
           {navItems.map((item) => (
             <NavLink
