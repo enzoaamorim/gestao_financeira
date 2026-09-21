@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFinance } from "../context/FinanceContext";
+import { useFinance, type AccountWithBalance } from "../context/FinanceContext";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
@@ -18,14 +18,14 @@ const typeLabels: Record<Account["type"], string> = {
 export default function Accounts() {
   const { accounts, deleteAccount } = useFinance();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Account | undefined>(undefined);
+  const [editing, setEditing] = useState<AccountWithBalance | undefined>(undefined);
 
   function openNew() {
     setEditing(undefined);
     setFormOpen(true);
   }
 
-  function openEdit(a: Account) {
+  function openEdit(a: AccountWithBalance) {
     setEditing(a);
     setFormOpen(true);
   }

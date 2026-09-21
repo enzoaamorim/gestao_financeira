@@ -20,17 +20,24 @@ export function GoalForm({ initial, onDone }: Props) {
   const [savedAmount, setSavedAmount] = useState(initial ? String(initial.savedAmount) : "0");
   const [color, setColor] = useState(initial?.color ?? colorOptions[0]);
   const [icon, setIcon] = useState(initial?.icon ?? iconOptions[0]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const target = parseFloat(targetAmount.replace(",", "."));
     const saved = parseFloat(savedAmount.replace(",", ".") || "0");
     if (!name.trim() || Number.isNaN(target) || target <= 0) return;
 
     const payload: Omit<Goal, "id"> = { name: name.trim(), targetAmount: target, savedAmount: saved, color, icon };
-    if (initial) updateGoal(initial.id, payload);
-    else addGoal(payload);
-    onDone();
+
+    setSubmitting(true);
+    setError(null);
+    const result = initial ? await updateGoal(initial.id, payload) : await addGoal(payload);
+    setSubmitting(false);
+
+    if (result.error) setError(result.error);
+    else onDone();
   }
 
   return (
@@ -102,8 +109,10 @@ export function GoalForm({ initial, onDone }: Props) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
-        {initial ? "Salvar alterações" : "Criar meta"}
+      {error && <p className="text-sm text-pink">{error}</p>}
+
+      <Button type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Salvando..." : initial ? "Salvar alterações" : "Criar meta"}
       </Button>
     </form>
   );

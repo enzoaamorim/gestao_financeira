@@ -1,138 +1,345 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Account, Budget, Category, Goal, Transaction } from "../lib/types";
-import { seedAccounts, seedBudgets, seedCategories, seedGoals, seedTransactions } from "../lib/seed";
-import { loadState, saveState } from "../lib/storage";
-import { makeId } from "../lib/id";
+import { seedCategories } from "../lib/seed";
+import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "./AuthContext";
+import {
+  accountFromRow,
+  accountToRow,
+  budgetFromRow,
+  budgetToRow,
+  categoryFromRow,
+  categoryToRow,
+  goalFromRow,
+  goalToRow,
+  transactionFromRow,
+  transactionToRow,
+} from "../lib/supabaseMappers";
 
-interface FinanceState {
+export type AccountWithBalance = Account & { balance: number };
+
+type MutationResult = { error: string | null };
+
+interface FinanceContextValue {
   categories: Category[];
-  accounts: Account[];
+  accounts: AccountWithBalance[];
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
-}
+  loading: boolean;
+  error: string | null;
+  clearError: () => void;
 
-interface FinanceContextValue extends FinanceState {
-  addTransaction: (t: Omit<Transaction, "id">) => void;
-  updateTransaction: (id: string, t: Omit<Transaction, "id">) => void;
-  deleteTransaction: (id: string) => void;
+  addTransaction: (t: Omit<Transaction, "id">) => Promise<MutationResult>;
+  updateTransaction: (id: string, t: Omit<Transaction, "id">) => Promise<MutationResult>;
+  deleteTransaction: (id: string) => Promise<MutationResult>;
 
-  addAccount: (a: Omit<Account, "id">) => void;
-  updateAccount: (id: string, a: Omit<Account, "id">) => void;
-  deleteAccount: (id: string) => void;
+  addAccount: (a: Omit<Account, "id">) => Promise<MutationResult>;
+  updateAccount: (id: string, a: Omit<Account, "id">) => Promise<MutationResult>;
+  deleteAccount: (id: string) => Promise<MutationResult>;
 
-  addBudget: (b: Omit<Budget, "id">) => void;
-  updateBudget: (id: string, b: Omit<Budget, "id">) => void;
-  deleteBudget: (id: string) => void;
+  addBudget: (b: Omit<Budget, "id">) => Promise<MutationResult>;
+  updateBudget: (id: string, b: Omit<Budget, "id">) => Promise<MutationResult>;
+  deleteBudget: (id: string) => Promise<MutationResult>;
 
-  addGoal: (g: Omit<Goal, "id">) => void;
-  updateGoal: (id: string, g: Omit<Goal, "id">) => void;
-  deleteGoal: (id: string) => void;
+  addGoal: (g: Omit<Goal, "id">) => Promise<MutationResult>;
+  updateGoal: (id: string, g: Omit<Goal, "id">) => Promise<MutationResult>;
+  deleteGoal: (id: string) => Promise<MutationResult>;
 
   categoryById: (id: string) => Category | undefined;
-  accountById: (id: string) => Account | undefined;
+  accountById: (id: string) => AccountWithBalance | undefined;
 }
-
-const defaultState: FinanceState = {
-  categories: seedCategories,
-  accounts: seedAccounts,
-  transactions: seedTransactions,
-  budgets: seedBudgets,
-  goals: seedGoals,
-};
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
 
+const NETWORK_ERROR_MESSAGE =
+  "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.";
+
+function friendlyError(err: unknown): string {
+  if (err instanceof TypeError) return NETWORK_ERROR_MESSAGE;
+  if (err && typeof err === "object" && "message" in err) return String((err as { message: unknown }).message);
+  return "Ocorreu um erro inesperado.";
+}
+
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<FinanceState>(() => loadState(defaultState));
+  const { user } = useAuth();
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    saveState(state);
-  }, [state]);
+    if (!user) return;
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes] = await Promise.all([
+          supabase.from("categories").select("*").order("name"),
+          supabase.from("accounts").select("*").order("created_at"),
+          supabase.from("transactions").select("*").order("date", { ascending: false }),
+          supabase.from("budgets").select("*"),
+          supabase.from("goals").select("*"),
+        ]);
+
+        for (const res of [categoriesRes, accountsRes, transactionsRes, budgetsRes, goalsRes]) {
+          if (res.error) throw res.error;
+        }
+
+        let loadedCategories = (categoriesRes.data ?? []).map(categoryFromRow);
+
+        if (loadedCategories.length === 0) {
+          const { data: seeded, error: seedError } = await supabase
+            .from("categories")
+            .insert(seedCategories.map(({ id: _id, ...c }) => categoryToRow(c)))
+            .select();
+          if (seedError) throw seedError;
+          loadedCategories = (seeded ?? []).map(categoryFromRow);
+        }
+
+        if (cancelled) return;
+        setCategories(loadedCategories);
+        setAccounts((accountsRes.data ?? []).map(accountFromRow));
+        setTransactions((transactionsRes.data ?? []).map(transactionFromRow));
+        setBudgets((budgetsRes.data ?? []).map(budgetFromRow));
+        setGoals((goalsRes.data ?? []).map(goalFromRow));
+        setError(null);
+      } catch (err) {
+        if (!cancelled) setError(friendlyError(err));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const accountsWithBalance = useMemo<AccountWithBalance[]>(() => {
+    return accounts.map((a) => {
+      const delta = transactions
+        .filter((t) => t.accountId === a.id)
+        .reduce((sum, t) => sum + (t.type === "income" ? t.amount : -t.amount), 0);
+      return { ...a, balance: a.initialBalance + delta };
+    });
+  }, [accounts, transactions]);
 
   const value = useMemo<FinanceContextValue>(() => {
-    const applyAccountDelta = (accounts: Account[], accountId: string, delta: number) =>
-      accounts.map((a) => (a.id === accountId ? { ...a, balance: a.balance + delta } : a));
+    async function addTransaction(t: Omit<Transaction, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("transactions")
+          .insert(transactionToRow(t))
+          .select()
+          .single();
+        if (err) throw err;
+        setTransactions((prev) => [transactionFromRow(data), ...prev]);
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
 
-    const signedAmount = (t: { type: Transaction["type"]; amount: number }) =>
-      t.type === "income" ? t.amount : -t.amount;
+    async function updateTransaction(id: string, t: Omit<Transaction, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("transactions")
+          .update(transactionToRow(t))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setTransactions((prev) => prev.map((tx) => (tx.id === id ? transactionFromRow(data) : tx)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteTransaction(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("transactions").delete().eq("id", id);
+        if (err) throw err;
+        setTransactions((prev) => prev.filter((tx) => tx.id !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function addAccount(a: Omit<Account, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase.from("accounts").insert(accountToRow(a)).select().single();
+        if (err) throw err;
+        setAccounts((prev) => [...prev, accountFromRow(data)]);
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function updateAccount(id: string, a: Omit<Account, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("accounts")
+          .update(accountToRow(a))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setAccounts((prev) => prev.map((acc) => (acc.id === id ? accountFromRow(data) : acc)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteAccount(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("accounts").delete().eq("id", id);
+        if (err) throw err;
+        setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+        setTransactions((prev) => prev.filter((tx) => tx.accountId !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function addBudget(b: Omit<Budget, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase.from("budgets").insert(budgetToRow(b)).select().single();
+        if (err) throw err;
+        setBudgets((prev) => [...prev, budgetFromRow(data)]);
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function updateBudget(id: string, b: Omit<Budget, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("budgets")
+          .update(budgetToRow(b))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setBudgets((prev) => prev.map((budget) => (budget.id === id ? budgetFromRow(data) : budget)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteBudget(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("budgets").delete().eq("id", id);
+        if (err) throw err;
+        setBudgets((prev) => prev.filter((budget) => budget.id !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function addGoal(g: Omit<Goal, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase.from("goals").insert(goalToRow(g)).select().single();
+        if (err) throw err;
+        setGoals((prev) => [...prev, goalFromRow(data)]);
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function updateGoal(id: string, g: Omit<Goal, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("goals")
+          .update(goalToRow(g))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setGoals((prev) => prev.map((goal) => (goal.id === id ? goalFromRow(data) : goal)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteGoal(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("goals").delete().eq("id", id);
+        if (err) throw err;
+        setGoals((prev) => prev.filter((goal) => goal.id !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
 
     return {
-      ...state,
+      categories,
+      accounts: accountsWithBalance,
+      transactions,
+      budgets,
+      goals,
+      loading,
+      error,
+      clearError: () => setError(null),
 
-      addTransaction: (t) =>
-        setState((s) => ({
-          ...s,
-          transactions: [{ ...t, id: makeId("t") }, ...s.transactions],
-          accounts: applyAccountDelta(s.accounts, t.accountId, signedAmount(t)),
-        })),
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      addAccount,
+      updateAccount,
+      deleteAccount,
+      addBudget,
+      updateBudget,
+      deleteBudget,
+      addGoal,
+      updateGoal,
+      deleteGoal,
 
-      updateTransaction: (id, t) =>
-        setState((s) => {
-          const previous = s.transactions.find((tx) => tx.id === id);
-          let accounts = s.accounts;
-          if (previous) {
-            accounts = applyAccountDelta(accounts, previous.accountId, -signedAmount(previous));
-          }
-          accounts = applyAccountDelta(accounts, t.accountId, signedAmount(t));
-          return {
-            ...s,
-            accounts,
-            transactions: s.transactions.map((tx) => (tx.id === id ? { ...t, id } : tx)),
-          };
-        }),
-
-      deleteTransaction: (id) =>
-        setState((s) => {
-          const previous = s.transactions.find((tx) => tx.id === id);
-          const accounts = previous
-            ? applyAccountDelta(s.accounts, previous.accountId, -signedAmount(previous))
-            : s.accounts;
-          return {
-            ...s,
-            accounts,
-            transactions: s.transactions.filter((tx) => tx.id !== id),
-          };
-        }),
-
-      addAccount: (a) =>
-        setState((s) => ({ ...s, accounts: [...s.accounts, { ...a, id: makeId("acc") }] })),
-
-      updateAccount: (id, a) =>
-        setState((s) => ({
-          ...s,
-          accounts: s.accounts.map((acc) => (acc.id === id ? { ...a, id } : acc)),
-        })),
-
-      deleteAccount: (id) =>
-        setState((s) => ({
-          ...s,
-          accounts: s.accounts.filter((acc) => acc.id !== id),
-          transactions: s.transactions.filter((tx) => tx.accountId !== id),
-        })),
-
-      addBudget: (b) => setState((s) => ({ ...s, budgets: [...s.budgets, { ...b, id: makeId("b") }] })),
-
-      updateBudget: (id, b) =>
-        setState((s) => ({
-          ...s,
-          budgets: s.budgets.map((budget) => (budget.id === id ? { ...b, id } : budget)),
-        })),
-
-      deleteBudget: (id) =>
-        setState((s) => ({ ...s, budgets: s.budgets.filter((budget) => budget.id !== id) })),
-
-      addGoal: (g) => setState((s) => ({ ...s, goals: [...s.goals, { ...g, id: makeId("g") }] })),
-
-      updateGoal: (id, g) =>
-        setState((s) => ({ ...s, goals: s.goals.map((goal) => (goal.id === id ? { ...g, id } : goal)) })),
-
-      deleteGoal: (id) => setState((s) => ({ ...s, goals: s.goals.filter((goal) => goal.id !== id) })),
-
-      categoryById: (id) => state.categories.find((c) => c.id === id),
-      accountById: (id) => state.accounts.find((a) => a.id === id),
+      categoryById: (id) => categories.find((c) => c.id === id),
+      accountById: (id) => accountsWithBalance.find((a) => a.id === id),
     };
-  }, [state]);
+  }, [categories, accountsWithBalance, transactions, budgets, goals, loading, error]);
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 }

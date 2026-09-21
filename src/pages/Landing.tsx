@@ -27,9 +27,9 @@ const features = [
 ];
 
 const advantages = [
-  "Seus dados ficam só no seu dispositivo — sem cadastro, sem servidor",
-  "Funciona offline, como um app instalado (PWA)",
-  "Categorias e cores customizáveis",
+  "Seus dados sincronizam entre celular e computador",
+  "Backup automático — nunca perde suas transações",
+  "Funciona como um app instalado (PWA)",
   "Interface rápida, sem anúncios ou distrações",
 ];
 
@@ -43,7 +43,7 @@ export default function Landing() {
             <a href="#recursos" className="hover:text-ink">Recursos</a>
             <a href="#vantagens" className="hover:text-ink">Vantagens</a>
           </nav>
-          <Link to="/app">
+          <Link to="/login">
             <Button size="sm">Entrar</Button>
           </Link>
         </div>
@@ -64,7 +64,7 @@ export default function Landing() {
             sem complicação.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Link to="/app">
+            <Link to="/login">
               <Button>Começar agora</Button>
             </Link>
             <a href="#recursos">
@@ -169,7 +169,7 @@ export default function Landing() {
         <div className="card-glow mx-auto max-w-3xl rounded-3xl border border-border bg-surface p-10 text-center">
           <h2 className="text-2xl font-bold md:text-3xl">Pronto para organizar sua grana?</h2>
           <p className="mt-3 text-muted">Comece agora, é grátis e roda direto no seu navegador.</p>
-          <Link to="/app" className="mt-6 inline-block">
+          <Link to="/login" className="mt-6 inline-block">
             <Button>Começar agora</Button>
           </Link>
         </div>

@@ -14,7 +14,8 @@ export interface Account {
   id: string;
   name: string;
   type: AccountType;
-  balance: number;
+  /** Balance before any recorded transaction; current balance is derived at runtime. */
+  initialBalance: number;
   color: string;
   /** Only for credit cards */
   limit?: number;

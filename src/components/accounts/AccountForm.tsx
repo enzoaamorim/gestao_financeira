@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Account, AccountType } from "../../lib/types";
-import { useFinance } from "../../context/FinanceContext";
+import { useFinance, type AccountWithBalance } from "../../context/FinanceContext";
 import { Button } from "../ui/Button";
 import { inputClass, labelClass } from "../ui/fields";
 
@@ -14,7 +14,7 @@ const typeLabels: Record<AccountType, string> = {
 const colorOptions = ["#3ed9b0", "#f4577f", "#f4c744", "#8b7bf7", "#5fb0f0"];
 
 interface Props {
-  initial?: Account;
+  initial?: AccountWithBalance;
   onDone: () => void;
 }
 
@@ -26,23 +26,34 @@ export function AccountForm({ initial, onDone }: Props) {
   const [balance, setBalance] = useState(initial ? String(initial.balance) : "");
   const [limit, setLimit] = useState(initial?.limit ? String(initial.limit) : "");
   const [color, setColor] = useState(initial?.color ?? colorOptions[0]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const balanceValue = parseFloat(balance.replace(",", ".") || "0");
     if (!name.trim() || Number.isNaN(balanceValue)) return;
 
+    // "balance" no formulário é o saldo atual; convertemos para o saldo
+    // inicial (o que fica salvo) descontando as transações já registradas.
+    const alreadyPosted = initial ? initial.balance - initial.initialBalance : 0;
+    const initialBalance = balanceValue - alreadyPosted;
+
     const payload: Omit<Account, "id"> = {
       name: name.trim(),
       type,
-      balance: balanceValue,
+      initialBalance,
       color,
       ...(type === "credit_card" ? { limit: parseFloat(limit.replace(",", ".") || "0") } : {}),
     };
 
-    if (initial) updateAccount(initial.id, payload);
-    else addAccount(payload);
-    onDone();
+    setSubmitting(true);
+    setError(null);
+    const result = initial ? await updateAccount(initial.id, payload) : await addAccount(payload);
+    setSubmitting(false);
+
+    if (result.error) setError(result.error);
+    else onDone();
   }
 
   return (
@@ -110,8 +121,10 @@ export function AccountForm({ initial, onDone }: Props) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
-        {initial ? "Salvar alterações" : "Adicionar conta"}
+      {error && <p className="text-sm text-pink">{error}</p>}
+
+      <Button type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Salvando..." : initial ? "Salvar alterações" : "Adicionar conta"}
       </Button>
     </form>
   );

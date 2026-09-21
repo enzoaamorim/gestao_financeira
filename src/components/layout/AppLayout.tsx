@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from "react-router-dom";
 import clsx from "clsx";
 import { Logo } from "../ui/Logo";
+import { useAuth } from "../../context/AuthContext";
+import { useFinance } from "../../context/FinanceContext";
 
 const navItems = [
   { to: "/app", label: "Dashboard", icon: "📊", end: true },
@@ -10,6 +12,9 @@ const navItems = [
 ];
 
 export function AppLayout() {
+  const { user, signOut } = useAuth();
+  const { loading, error, clearError } = useFinance();
+
   return (
     <div className="flex min-h-screen bg-bg text-ink">
       <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-surface px-4 py-6 md:flex">
@@ -36,19 +41,40 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="rounded-2xl border border-border bg-surface-2 p-4">
-          <p className="text-xs text-muted">
-            Seus dados ficam salvos apenas neste dispositivo (localStorage).
+        <div className="space-y-3 rounded-2xl border border-border bg-surface-2 p-4">
+          <p className="truncate text-xs text-muted" title={user?.email}>
+            {user?.email}
           </p>
+          <button
+            onClick={() => signOut()}
+            className="text-xs font-semibold text-pink hover:underline"
+          >
+            Sair
+          </button>
         </div>
       </aside>
 
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
           <Logo />
+          <button onClick={() => signOut()} className="text-xs font-semibold text-pink">
+            Sair
+          </button>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
-          <Outlet />
+          {error && (
+            <div className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-pink/30 bg-pink/10 px-4 py-3 text-sm text-pink">
+              <span>{error}</span>
+              <button onClick={clearError} className="shrink-0 font-semibold hover:underline">
+                Fechar
+              </button>
+            </div>
+          )}
+          {loading ? (
+            <div className="flex justify-center py-20 text-sm text-muted">Carregando seus dados...</div>
+          ) : (
+            <Outlet />
+          )}
         </main>
         <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-border bg-surface py-2 md:hidden">
           {navItems.map((item) => (

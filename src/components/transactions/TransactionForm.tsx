@@ -21,6 +21,8 @@ export function TransactionForm({ initial, onDone }: Props) {
     initial?.categoryId ?? categories.find((c) => c.type === type)?.id ?? "",
   );
   const [accountId, setAccountId] = useState(initial?.accountId ?? accounts[0]?.id ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const categoryOptions = categories.filter((c) => c.type === type);
 
@@ -30,15 +32,20 @@ export function TransactionForm({ initial, onDone }: Props) {
     if (firstOfType) setCategoryId(firstOfType.id);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
     if (!description.trim() || Number.isNaN(value) || value <= 0 || !categoryId || !accountId) return;
 
     const payload = { description: description.trim(), amount: value, date, type, categoryId, accountId };
-    if (initial) updateTransaction(initial.id, payload);
-    else addTransaction(payload);
-    onDone();
+
+    setSubmitting(true);
+    setError(null);
+    const result = initial ? await updateTransaction(initial.id, payload) : await addTransaction(payload);
+    setSubmitting(false);
+
+    if (result.error) setError(result.error);
+    else onDone();
   }
 
   return (
@@ -132,8 +139,10 @@ export function TransactionForm({ initial, onDone }: Props) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
-        {initial ? "Salvar alterações" : "Adicionar transação"}
+      {error && <p className="text-sm text-pink">{error}</p>}
+
+      <Button type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Salvando..." : initial ? "Salvar alterações" : "Adicionar transação"}
       </Button>
     </form>
   );

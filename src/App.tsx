@@ -1,7 +1,10 @@
 import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import { FinanceProvider } from "./context/FinanceContext";
+import { RequireAuth } from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Accounts from "./pages/Accounts";
@@ -9,17 +12,27 @@ import Goals from "./pages/Goals";
 
 function App() {
   return (
-    <FinanceProvider>
+    <AuthProvider>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/app" element={<AppLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/app"
+          element={
+            <RequireAuth>
+              <FinanceProvider>
+                <AppLayout />
+              </FinanceProvider>
+            </RequireAuth>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="transacoes" element={<Transactions />} />
           <Route path="contas" element={<Accounts />} />
           <Route path="metas" element={<Goals />} />
         </Route>
       </Routes>
-    </FinanceProvider>
+    </AuthProvider>
   );
 }
 

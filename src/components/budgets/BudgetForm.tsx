@@ -19,8 +19,10 @@ export function BudgetForm({ initial, onDone }: Props) {
 
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? availableCategories[0]?.id ?? "");
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
     if (!categoryId || Number.isNaN(value) || value <= 0) return;
@@ -32,9 +34,14 @@ export function BudgetForm({ initial, onDone }: Props) {
       amount: value,
       period: "monthly",
     };
-    if (initial) updateBudget(initial.id, payload);
-    else addBudget(payload);
-    onDone();
+
+    setSubmitting(true);
+    setError(null);
+    const result = initial ? await updateBudget(initial.id, payload) : await addBudget(payload);
+    setSubmitting(false);
+
+    if (result.error) setError(result.error);
+    else onDone();
   }
 
   if (availableCategories.length === 0 && !initial) {
@@ -64,8 +71,10 @@ export function BudgetForm({ initial, onDone }: Props) {
           required
         />
       </div>
-      <Button type="submit" className="w-full">
-        {initial ? "Salvar alterações" : "Criar orçamento"}
+      {error && <p className="text-sm text-pink">{error}</p>}
+
+      <Button type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Salvando..." : initial ? "Salvar alterações" : "Criar orçamento"}
       </Button>
     </form>
   );
