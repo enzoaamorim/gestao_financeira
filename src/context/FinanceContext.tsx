@@ -30,6 +30,10 @@ interface FinanceContextValue {
   error: string | null;
   clearError: () => void;
 
+  addCategory: (c: Omit<Category, "id">) => Promise<MutationResult>;
+  updateCategory: (id: string, c: Omit<Category, "id">) => Promise<MutationResult>;
+  deleteCategory: (id: string) => Promise<MutationResult>;
+
   addTransaction: (t: Omit<Transaction, "id">) => Promise<MutationResult>;
   updateTransaction: (id: string, t: Omit<Transaction, "id">) => Promise<MutationResult>;
   deleteTransaction: (id: string) => Promise<MutationResult>;
@@ -57,6 +61,9 @@ const NETWORK_ERROR_MESSAGE =
 
 function friendlyError(err: unknown): string {
   if (err instanceof TypeError) return NETWORK_ERROR_MESSAGE;
+  if (err && typeof err === "object" && "code" in err && (err as { code: unknown }).code === "23503") {
+    return "Essa categoria não pode ser excluída porque já tem transações associadas.";
+  }
   if (err && typeof err === "object" && "message" in err) return String((err as { message: unknown }).message);
   return "Ocorreu um erro inesperado.";
 }
@@ -132,6 +139,53 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }, [accounts, transactions]);
 
   const value = useMemo<FinanceContextValue>(() => {
+    async function addCategory(c: Omit<Category, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase.from("categories").insert(categoryToRow(c)).select().single();
+        if (err) throw err;
+        setCategories((prev) => [...prev, categoryFromRow(data)].sort((a, b) => a.name.localeCompare(b.name)));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function updateCategory(id: string, c: Omit<Category, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("categories")
+          .update(categoryToRow(c))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setCategories((prev) =>
+          prev.map((cat) => (cat.id === id ? categoryFromRow(data) : cat)).sort((a, b) => a.name.localeCompare(b.name)),
+        );
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteCategory(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("categories").delete().eq("id", id);
+        if (err) throw err;
+        setCategories((prev) => prev.filter((cat) => cat.id !== id));
+        setBudgets((prev) => prev.filter((budget) => budget.categoryId !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
     async function addTransaction(t: Omit<Transaction, "id">): Promise<MutationResult> {
       try {
         const { data, error: err } = await supabase
@@ -322,6 +376,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       clearError: () => setError(null),
+
+      addCategory,
+      updateCategory,
+      deleteCategory,
 
       addTransaction,
       updateTransaction,

@@ -9,6 +9,7 @@ const navItems = [
   { to: "/app/transacoes", label: "Transações", icon: "💸" },
   { to: "/app/contas", label: "Contas e cartões", icon: "🏦" },
   { to: "/app/metas", label: "Metas e orçamento", icon: "🎯" },
+  { to: "/app/categorias", label: "Categorias", icon: "🏷️" },
 ];
 
 export function AppLayout() {
