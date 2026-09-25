@@ -8,7 +8,10 @@ import { AvatarUploader } from "./AvatarUploader";
 import { useAuth } from "../../context/AuthContext";
 import { useHabits } from "../../context/HabitsContext";
 
-const navItems = [{ to: "/habitos", label: "Dashboard", icon: "✅", end: true }];
+const navItems = [
+  { to: "/habitos", label: "Dashboard", icon: "✅", end: true },
+  { to: "/habitos/agenda", label: "Agenda", icon: "📅" },
+];
 
 export function HabitsLayout() {
   const { signOut } = useAuth();

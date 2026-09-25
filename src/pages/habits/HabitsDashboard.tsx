@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useHabits } from "../../context/HabitsContext";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/ui/Card";
@@ -21,8 +22,17 @@ const quickAmounts = [
 ];
 
 export default function HabitsDashboard() {
-  const { habits, isDoneToday, habitStreak, habitHistory, toggleHabitToday, deleteHabit, todayWaterMl, addWaterLog } =
-    useHabits();
+  const {
+    habits,
+    isDoneToday,
+    habitStreak,
+    habitHistory,
+    toggleHabitToday,
+    deleteHabit,
+    todayWaterMl,
+    addWaterLog,
+    pendingAgendaTasks,
+  } = useHabits();
   const { waterGoalMl, updateWaterGoal } = useAuth();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -70,6 +80,19 @@ export default function HabitsDashboard() {
         <h1 className="text-2xl font-bold">Hábitos</h1>
         <p className="mt-1 text-sm text-muted">Sua rotina diária e sua meta de água</p>
       </div>
+
+      {pendingAgendaTasks.length > 0 && (
+        <Link
+          to="/habitos/agenda"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-yellow/30 bg-yellow/10 px-4 py-3 text-sm text-ink transition-colors hover:bg-yellow/15"
+        >
+          <span>
+            📅 Você tem {pendingAgendaTasks.length}{" "}
+            {pendingAgendaTasks.length === 1 ? "tarefa pendente" : "tarefas pendentes"} na agenda
+          </span>
+          <span className="shrink-0 font-semibold text-yellow">Ver agenda →</span>
+        </Link>
+      )}
 
       <Card className="space-y-4">
         <div className="flex items-start justify-between gap-4">

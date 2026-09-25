@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Habit, HabitLog, WaterLog } from "../lib/habitsTypes";
+import type { AgendaTask } from "../lib/agendaTypes";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "./AuthContext";
 import { computeStreak } from "../lib/streak";
@@ -11,6 +12,7 @@ import {
   waterLogFromRow,
   waterLogToRow,
 } from "../lib/habitsMappers";
+import { agendaTaskFromRow, agendaTaskToRow } from "../lib/agendaMappers";
 
 type MutationResult = { error: string | null };
 
@@ -38,6 +40,13 @@ interface HabitsContextValue {
   todayWaterMl: number;
   addWaterLog: (amountMl: number) => Promise<MutationResult>;
   deleteWaterLog: (id: string) => Promise<MutationResult>;
+
+  agendaTasks: AgendaTask[];
+  pendingAgendaTasks: AgendaTask[];
+  addAgendaTask: (t: Omit<AgendaTask, "id" | "done">) => Promise<MutationResult>;
+  updateAgendaTask: (id: string, t: Omit<AgendaTask, "id">) => Promise<MutationResult>;
+  deleteAgendaTask: (id: string) => Promise<MutationResult>;
+  toggleAgendaTask: (id: string) => Promise<MutationResult>;
 }
 
 const HabitsContext = createContext<HabitsContextValue | null>(null);
@@ -56,6 +65,7 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
   const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
+  const [agendaTasks, setAgendaTasks] = useState<AgendaTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,13 +76,14 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
     async function load() {
       setLoading(true);
       try {
-        const [habitsRes, habitLogsRes, waterLogsRes] = await Promise.all([
+        const [habitsRes, habitLogsRes, waterLogsRes, agendaTasksRes] = await Promise.all([
           supabase.from("habits").select("*").order("created_at"),
           supabase.from("habit_logs").select("*"),
           supabase.from("water_logs").select("*").order("created_at"),
+          supabase.from("agenda_tasks").select("*").order("date"),
         ]);
 
-        for (const res of [habitsRes, habitLogsRes, waterLogsRes]) {
+        for (const res of [habitsRes, habitLogsRes, waterLogsRes, agendaTasksRes]) {
           if (res.error) throw res.error;
         }
 
@@ -80,6 +91,7 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
         setHabits((habitsRes.data ?? []).map(habitFromRow));
         setHabitLogs((habitLogsRes.data ?? []).map(habitLogFromRow));
         setWaterLogs((waterLogsRes.data ?? []).map(waterLogFromRow));
+        setAgendaTasks((agendaTasksRes.data ?? []).map(agendaTaskFromRow));
         setError(null);
       } catch (err) {
         if (!cancelled) setError(friendlyError(err));
@@ -221,6 +233,66 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
       .filter((w) => w.date === todayKey())
       .reduce((sum, w) => sum + w.amountMl, 0);
 
+    async function addAgendaTask(t: Omit<AgendaTask, "id" | "done">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("agenda_tasks")
+          .insert(agendaTaskToRow({ ...t, done: false }))
+          .select()
+          .single();
+        if (err) throw err;
+        setAgendaTasks((prev) =>
+          [...prev, agendaTaskFromRow(data)].sort((a, b) => a.date.localeCompare(b.date)),
+        );
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function updateAgendaTask(id: string, t: Omit<AgendaTask, "id">): Promise<MutationResult> {
+      try {
+        const { data, error: err } = await supabase
+          .from("agenda_tasks")
+          .update(agendaTaskToRow(t))
+          .eq("id", id)
+          .select()
+          .single();
+        if (err) throw err;
+        setAgendaTasks((prev) =>
+          prev.map((x) => (x.id === id ? agendaTaskFromRow(data) : x)).sort((a, b) => a.date.localeCompare(b.date)),
+        );
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function deleteAgendaTask(id: string): Promise<MutationResult> {
+      try {
+        const { error: err } = await supabase.from("agenda_tasks").delete().eq("id", id);
+        if (err) throw err;
+        setAgendaTasks((prev) => prev.filter((x) => x.id !== id));
+        return { error: null };
+      } catch (err) {
+        const message = friendlyError(err);
+        setError(message);
+        return { error: message };
+      }
+    }
+
+    async function toggleAgendaTask(id: string): Promise<MutationResult> {
+      const task = agendaTasks.find((t) => t.id === id);
+      if (!task) return { error: null };
+      return updateAgendaTask(id, { title: task.title, date: task.date, done: !task.done });
+    }
+
+    const pendingAgendaTasks = agendaTasks.filter((t) => !t.done && t.date <= todayKey());
+
     return {
       habits,
       habitLogs,
@@ -241,8 +313,15 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
       todayWaterMl,
       addWaterLog,
       deleteWaterLog,
+
+      agendaTasks,
+      pendingAgendaTasks,
+      addAgendaTask,
+      updateAgendaTask,
+      deleteAgendaTask,
+      toggleAgendaTask,
     };
-  }, [habits, habitLogs, waterLogs, loading, error]);
+  }, [habits, habitLogs, waterLogs, agendaTasks, loading, error]);
 
   return <HabitsContext.Provider value={value}>{children}</HabitsContext.Provider>;
 }
