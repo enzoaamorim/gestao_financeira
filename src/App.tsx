@@ -21,6 +21,7 @@ import LogWorkout from "./pages/fitness/LogWorkout";
 import Routines from "./pages/fitness/Routines";
 import Exercises from "./pages/fitness/Exercises";
 import HabitsDashboard from "./pages/habits/HabitsDashboard";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -80,6 +81,7 @@ function App() {
         >
           <Route index element={<HabitsDashboard />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   );
