@@ -41,6 +41,11 @@
     background-color: var(--color-yellow);
     color: #0a0a0b;
   }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {
