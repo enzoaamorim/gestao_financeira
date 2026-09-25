@@ -8,8 +8,11 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { HabitForm } from "../../components/habits/HabitForm";
 import { inputClass } from "../../components/ui/fields";
+import { formatDate } from "../../lib/format";
 import type { Habit } from "../../lib/habitsTypes";
 import clsx from "clsx";
+
+const HISTORY_DAYS = 21;
 
 const quickAmounts = [
   { label: "+250ml", ml: 250 },
@@ -18,7 +21,8 @@ const quickAmounts = [
 ];
 
 export default function HabitsDashboard() {
-  const { habits, isDoneToday, habitStreak, toggleHabitToday, deleteHabit, todayWaterMl, addWaterLog } = useHabits();
+  const { habits, isDoneToday, habitStreak, habitHistory, toggleHabitToday, deleteHabit, todayWaterMl, addWaterLog } =
+    useHabits();
   const { waterGoalMl, updateWaterGoal } = useAuth();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -129,44 +133,59 @@ export default function HabitsDashboard() {
             {activeHabits.map((h) => {
               const done = isDoneToday(h.id);
               const streak = habitStreak(h.id);
+              const history = habitHistory(h.id, HISTORY_DAYS);
               return (
                 <div
                   key={h.id}
                   className={clsx(
-                    "group flex items-center gap-3 rounded-xl border border-border p-3 transition-colors",
+                    "group rounded-xl border border-border p-3 transition-colors",
                     done && "border-teal/30 bg-teal/5",
                   )}
                 >
-                  <button
-                    onClick={() => toggleHabitToday(h.id)}
-                    aria-label={done ? "Marcar como não feito" : "Marcar como feito"}
-                    className={clsx(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs transition-colors",
-                      done ? "border-teal bg-teal text-bg" : "border-border text-transparent hover:border-muted",
-                    )}
-                  >
-                    ✓
-                  </button>
-                  <span className="text-base">{h.icon}</span>
-                  <p className={clsx("flex-1 truncate text-sm font-medium", done && "text-muted line-through")}>
-                    {h.name}
-                  </p>
-                  {streak > 0 && <span className="shrink-0 text-xs font-semibold text-yellow">🔥 {streak}</span>}
-                  <div className="hidden shrink-0 items-center gap-1 group-hover:flex">
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => openEdit(h)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
-                      aria-label="Editar"
+                      onClick={() => toggleHabitToday(h.id)}
+                      aria-label={done ? "Marcar como não feito" : "Marcar como feito"}
+                      className={clsx(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs transition-colors",
+                        done ? "border-teal bg-teal text-bg" : "border-border text-transparent hover:border-muted",
+                      )}
                     >
-                      ✎
+                      ✓
                     </button>
-                    <button
-                      onClick={() => setDeleteTarget(h)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
-                      aria-label="Excluir"
-                    >
-                      🗑
-                    </button>
+                    <span className="text-base">{h.icon}</span>
+                    <p className={clsx("flex-1 truncate text-sm font-medium", done && "text-muted line-through")}>
+                      {h.name}
+                    </p>
+                    {streak > 0 && <span className="shrink-0 text-xs font-semibold text-yellow">🔥 {streak}</span>}
+                    <div className="hidden shrink-0 items-center gap-1 group-hover:flex">
+                      <button
+                        onClick={() => openEdit(h)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+                        aria-label="Editar"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(h)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-pink/10 hover:text-pink"
+                        aria-label="Excluir"
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2.5 flex gap-[3px] pl-9" aria-label={`Histórico dos últimos ${HISTORY_DAYS} dias`}>
+                    {history.map((d) => (
+                      <span
+                        key={d.date}
+                        title={`${formatDate(d.date)} · ${d.done ? "feito" : "não feito"}`}
+                        className={clsx(
+                          "h-2.5 w-2.5 rounded-sm",
+                          d.done ? "bg-teal" : "bg-surface-2",
+                        )}
+                      />
+                    ))}
                   </div>
                 </div>
               );

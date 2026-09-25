@@ -32,6 +32,7 @@ interface HabitsContextValue {
 
   isDoneToday: (habitId: string) => boolean;
   habitStreak: (habitId: string) => number;
+  habitHistory: (habitId: string, days: number) => { date: string; done: boolean }[];
   toggleHabitToday: (habitId: string) => Promise<MutationResult>;
 
   todayWaterMl: number;
@@ -148,6 +149,19 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
       return computeStreak(habitLogs.filter((l) => l.habitId === habitId).map((l) => l.date));
     }
 
+    function habitHistory(habitId: string, days: number): { date: string; done: boolean }[] {
+      const doneDates = new Set(habitLogs.filter((l) => l.habitId === habitId).map((l) => l.date));
+      const result: { date: string; done: boolean }[] = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        const date = d.toISOString().slice(0, 10);
+        result.push({ date, done: doneDates.has(date) });
+      }
+      return result;
+    }
+
     async function toggleHabitToday(habitId: string): Promise<MutationResult> {
       const today = todayKey();
       const existing = habitLogs.find((l) => l.habitId === habitId && l.date === today);
@@ -221,6 +235,7 @@ export function HabitsProvider({ children }: { children: ReactNode }) {
 
       isDoneToday,
       habitStreak,
+      habitHistory,
       toggleHabitToday,
 
       todayWaterMl,
